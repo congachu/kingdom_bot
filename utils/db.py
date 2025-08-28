@@ -120,6 +120,14 @@ CREATE TABLE IF NOT EXISTS price_indices_daily (
   price_index NUMERIC(6,4)  NOT NULL,
   PRIMARY KEY(country_id, item_id, date)
 );
+
+CREATE TABLE IF NOT EXISTS user_claims (
+  country_id BIGINT NOT NULL REFERENCES countries(country_id) ON DELETE CASCADE,
+  user_id    BIGINT NOT NULL,
+  channel_id BIGINT NOT NULL,
+  claim_date DATE   NOT NULL,
+  PRIMARY KEY (country_id, user_id, channel_id, claim_date)
+);
 """
 
 SEED_SQL = """

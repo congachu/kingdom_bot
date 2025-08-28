@@ -17,6 +17,17 @@ from utils.constants import (
 from utils.timezone import KST
 
 
+# ---------- 티어 설정 (1~5) ----------
+# 가격/유지비는 정부(토지 지정) 쪽에서 사용하고, 여기서는 수확량 범위만 사용.
+LAND_TIERS = {
+    1: {"price": 5_000,   "upkeep": 1_000,  "yield_min": 2,  "yield_max": 4},
+    2: {"price": 15_000,  "upkeep": 3_000,  "yield_min": 4,  "yield_max": 6},
+    3: {"price": 30_000,  "upkeep": 6_000,  "yield_min": 6,  "yield_max": 9},
+    4: {"price": 60_000,  "upkeep": 12_000, "yield_min": 9,  "yield_max": 12},
+    5: {"price": 120_000, "upkeep": 25_000, "yield_min": 12, "yield_max": 16},
+}
+
+
 # ---------- 유틸: recipes.inputs_json 안전 파서 ----------
 def _json_obj(val) -> dict:
     """recipes.inputs_json이 dict가 아닐 수 있는 환경(드라이버/직렬화)에 대비한 파서."""
@@ -61,7 +72,6 @@ class Economy(commands.Cog):
             (f"%{current}%",)
         )
         return [app_commands.Choice(name=f"{r['name']} ({r['item_id']})", value=r['item_id']) for r in rows]
-
 
     async def _ac_resource(self, inter: discord.Interaction, current: str, owned_only: bool):
         cid, uid = inter.guild.id, inter.user.id
@@ -194,7 +204,6 @@ class Economy(commands.Cog):
                     res_lines.append(f"• {r['name']} ({r['item_id']}) — **{int(r['price'])} LC**")
         await send_ok(inter, "전체 시세", "\n".join(res_lines))
 
-
     @group.command(name="정산", description="이 토지(채널)에서 오늘의 자원을 수령합니다. (채널마다 1회/일, KST 0시 리셋)")
     async def claim(self, inter: discord.Interaction):
         if inter.guild is None:
@@ -217,8 +226,13 @@ class Economy(commands.Cog):
         if dup:
             return await send_err(inter, "오늘은 이미 이 토지에서 수확했습니다. 내일 다시 오세요!")
 
-        # 편향 추첨
-        bias, base = land["resource_bias"], land["base_yield"]
+        # --------- 수확량: 티어 기반 랜덤 범위 ---------
+        tier = int(land["tier"])
+        bias = land["resource_bias"]
+        tier_conf = LAND_TIERS.get(tier, LAND_TIERS[1])
+        harvest_qty = random.randint(tier_conf["yield_min"], tier_conf["yield_max"])
+
+        # 드랍 확률 테이블(편향 적용)
         table = [(i, p + (10 if i == bias else 0)) for i, p in BASE_DROP]
         s = sum(p for _, p in table)
         table = [(i, round(p * 100 / s)) for i, p in table]
@@ -228,7 +242,7 @@ class Economy(commands.Cog):
             table[0] = (i0, p0 + diff)
 
         results: dict[str, int] = {}
-        for _ in range(base):
+        for _ in range(harvest_qty):
             r = random.randint(1, 100)
             acc = 0
             for item, p in table:
@@ -265,7 +279,7 @@ class Economy(commands.Cog):
         lines = []
         for r in rows:
             inputs_obj = _json_obj(r["inputs_json"])
-            inputs = ", ".join([f"{await self._item_name(k)}×{v}" for k, v in inputs_obj.items()])
+            inputs = ", ".join([f"{await self._item_name(k)}×{v}" for k, v in inputs_obj.items() ])
             lines.append(f"• **{r['name']}** ({r['product_id']}) = {inputs} → ×{r['yield_qty']}")
         await send_ok(inter, "제작 레시피", "\n".join(lines))
 

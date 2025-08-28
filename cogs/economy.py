@@ -255,8 +255,8 @@ class Economy(commands.Cog):
         if results:
             await executemany(
                 "INSERT INTO inventory(country_id,user_id,item_id,qty) VALUES ($1,$2,$3,$4) "
-                "ON CONFLICT (country_id,user_id,item_id) DO UPDATE SET qty=inventory.qty+$4",
-                [(cid, uid, k, v, v) for k, v in results.items()]
+                "ON CONFLICT (country_id,user_id,item_id) DO UPDATE SET qty=inventory.qty+EXCLUDED.qty",
+                [(cid, uid, k, v) for k, v in results.items()]
             )
 
         await execute(

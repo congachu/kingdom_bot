@@ -5,7 +5,8 @@ from discord.ext import commands
 from discord import app_commands
 from utils.db import fetchone, fetchall, execute
 from utils.embeds import send_ok, send_err
-from utils.constants import EMA_ALPHA, KST
+from utils.constants import EMA_ALPHA
+from utils.timezone import KST
 from datetime import datetime
 
 

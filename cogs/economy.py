@@ -7,8 +7,9 @@ from discord import app_commands
 from utils.db import fetchone, fetchall, execute, executemany
 from utils.embeds import send_ok, send_err
 from utils.constants import (
-    KST, BASE_DROP, NPC_RESOURCE_RATE, NPC_ITEM_RATE, NPC_ITEM_TAX
+    BASE_DROP, NPC_RESOURCE_RATE, NPC_ITEM_RATE, NPC_ITEM_TAX
 )
+from utils.timezone import KST
 from datetime import datetime, date
 
 def today_kst() -> date:

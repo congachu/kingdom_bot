@@ -1,9 +1,6 @@
 # utils/constants.py
 from zoneinfo import ZoneInfo
 
-# 타임존
-KST = ZoneInfo("Asia/Seoul")
-
 # NPC 고정 비율
 NPC_RESOURCE_RATE = 0.65  # 자원 NPC 매입률 (고정)
 NPC_ITEM_RATE     = 0.95  # 아이템 NPC 매입률 (고정)

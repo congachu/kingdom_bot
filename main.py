@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 import psycopg2
 from dotenv import load_dotenv
+from utils.db import init_db
 
 load_dotenv()
 
@@ -16,7 +17,6 @@ class AClient(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
         self.synced = False
         self.start_time = datetime.datetime.utcnow()  # 업타임 기준(UTC)
-        self.setup_db_connection()
 
     # --------- 유틸 ----------
     @staticmethod
@@ -33,6 +33,7 @@ class AClient(commands.Bot):
 
     async def setup_hook(self):
         # 코그 로드
+        await init_db()
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):
                 await self.load_extension(f"cogs.{filename[:-3]}")
@@ -70,40 +71,6 @@ class AClient(commands.Bot):
             await self.change_presence(activity=discord.Game(text))
         except Exception as e:
             print(f"❌ 상태 즉시 갱신 오류: {e}")
-
-    # --------- DB ----------
-    def setup_db_connection(self):
-        try:
-            self.conn = psycopg2.connect(
-                dbname=os.getenv("DB_NAME"),
-                user=os.getenv("DB_USER"),
-                password=os.getenv("DB_PASSWORD"),
-                host=os.getenv("DB_HOST"),
-                port=os.getenv("DB_PORT", "5432"),
-                sslmode='prefer',
-                connect_timeout=10,
-            )
-            self.conn.autocommit = True
-            self.cursor = self.conn.cursor()
-        except Exception as e:
-            print(f"❌ 데이터베이스 연결 오류: {e}")
-            self.conn, self.cursor = None, None
-
-    def ensure_db_connection(self):
-        try:
-            if not self.conn or self.conn.closed:
-                print("⚠️ 데이터베이스 재연결 시도 중...")
-                self.setup_db_connection()
-            return self.conn is not None
-        except Exception as e:
-            print(f"❌ 데이터베이스 상태 확인 중 오류: {e}")
-            return False
-
-    def get_cursor(self):
-        """데이터베이스 연결을 확인하고 커서 반환"""
-        if self.ensure_db_connection():
-            return self.conn.cursor()
-        return None
 
     # --------- 상태 메시지 루프(업타임 + 서버 수) ---------
     async def update_status(self):

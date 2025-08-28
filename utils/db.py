@@ -23,6 +23,14 @@ CREATE TABLE IF NOT EXISTS treasury_ledger (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS market_prices (
+  country_id   BIGINT NOT NULL REFERENCES countries(country_id) ON DELETE CASCADE,
+  item_id      TEXT   NOT NULL REFERENCES items(item_id) ON DELETE CASCADE,
+  ema_price    INTEGER NOT NULL,
+  last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (country_id, item_id)
+);
+
 CREATE TABLE IF NOT EXISTS lands (
   country_id   BIGINT NOT NULL REFERENCES countries(country_id) ON DELETE CASCADE,
   channel_id   BIGINT NOT NULL,
